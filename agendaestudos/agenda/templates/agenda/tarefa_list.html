@@ -1,0 +1,92 @@
+{% extends 'agenda/base.html' %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Minhas Tarefas</h2>
+        <a href="{% url 'tarefa_create' %}" class="btn btn-primary">Adicionar Tarefa</a>
+    </div>
+
+    <div class="card card-body mb-4">
+        <form method="GET" action="{% url 'tarefa_list' %}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="materia" class="form-label">Filtrar por Matéria</label>
+                    <select name="materia" id="materia" class="form-select">
+                        <option value="">Todas</option>
+                        {% for materia in all_materias %}
+                            <option value="{{ materia.id }}" {% if materia.id == current_filters.materia %}selected{% endif %}>
+                                {{ materia.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Filtrar por Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">Todos</option>
+                        {% for value, display in status_choices %}
+                            <option value="{{ value }}" {% if value == current_filters.status %}selected{% endif %}>
+                                {{ display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="prioridade" class="form-label">Filtrar por Prioridade</label>
+                    <select name="prioridade" id="prioridade" class="form-select">
+                        <option value="">Todas</option>
+                        {% for value, display in prioridade_choices %}
+                            <option value="{{ value }}" {% if value == current_filters.prioridade %}selected{% endif %}>
+                                {{ display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-info w-100">Filtrar</button>
+                    <a href="{% url 'tarefa_list' %}" class="btn btn-secondary ms-2" title="Limpar Filtros">X</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Matéria</th>
+                    <th>Início</th>
+                    <th>Fim</th>
+                    <th>Status</th>
+                    <th>Prioridade</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tarefa in tarefas %}
+                <tr>
+                    <td>{{ tarefa.titulo }}</td>
+                    <td>{{ tarefa.materia.nome }}</td>
+                    <td>{{ tarefa.data_inicio|date:"d/m/Y H:i" }}</td>
+                    <td>{{ tarefa.data_fim|date:"d/m/Y H:i" }}</td>
+                    <td><span class="badge bg-secondary">{{ tarefa.get_status_display }}</span></td>
+                    <td><span class="badge bg-info">{{ tarefa.get_prioridade_display }}</span></td>
+                    <td>
+                        <a href="{% url 'tarefa_update' tarefa.pk %}" class="btn btn-secondary btn-sm">Editar</a>
+                        <a href="{% url 'tarefa_delete' tarefa.pk %}" class="btn btn-danger btn-sm">Deletar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">
+                        {% if current_filters.materia or current_filters.status or current_filters.prioridade %}
+                            Nenhuma tarefa encontrada com os filtros aplicados.
+                        {% else %}
+                            Nenhuma tarefa cadastrada.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock content %}

@@ -1,0 +1,14 @@
+{% extends 'agenda/base.html' %}
+{% block content %}
+    <div class="card">
+        <div class="card-header"><h3>{{ title }}</h3></div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-success">Salvar</button>
+                <a href="{% url 'materia_list' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

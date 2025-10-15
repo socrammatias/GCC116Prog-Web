@@ -1,0 +1,14 @@
+{% extends 'agenda/base.html' %}
+{% block content %}
+    <div class="card">
+        <div class="card-header"><h3>Deletar Tarefa</h3></div>
+        <div class="card-body">
+            <p>Você tem certeza que quer deletar a tarefa "<strong>{{ tarefa.titulo }}</strong>"?</p>
+            <form method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Sim, Deletar</button>
+                <a href="{% url 'tarefa_list' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

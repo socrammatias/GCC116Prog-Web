@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agenda de Estudos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'home' %}">Agenda de Estudos</a>
+            
+            {% if user.is_authenticated %}
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'materia_list' %}">Minhas Matérias</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'tarefa_list' %}">Minhas Tarefas</a>
+                </li>
+            </ul>
+            {% endif %}
+
+            <div class="d-flex">
+                {% if user.is_authenticated %}
+                    <span class="navbar-text me-3">Olá, {{ user.username }}</span>
+                    <form method="POST" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button class="btn btn-danger" type="submit">Sair</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-success me-2">Entrar</a>
+                    <a href="{% url 'cadastro' %}" class="btn btn-primary">Cadastrar</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    <main class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

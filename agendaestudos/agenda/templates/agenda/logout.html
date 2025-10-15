@@ -1,0 +1,10 @@
+{% extends 'agenda/base.html' %}
+
+{% block content %}
+    <h2>Você saiu da sua conta.</h2>
+    <div class="border-top pt-3">
+        <small class="text-muted">
+            <a href="{% url 'login' %}">Fazer login novamente</a>
+        </small>
+    </div>
+{% endblock content %}

@@ -1,0 +1,15 @@
+{% extends 'agenda/base.html' %}
+{% block content %}
+    <div class="card">
+        <div class="card-header"><h3>Deletar Matéria</h3></div>
+        <div class="card-body">
+            <p>Você tem certeza que quer deletar a matéria "<strong>{{ materia.nome }}</strong>"?</p>
+            <p class="text-danger">Atenção: todas as tarefas associadas a esta matéria também serão deletadas.</p>
+            <form method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Sim, Deletar</button>
+                <a href="{% url 'materia_list' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+{% endblock content %}
