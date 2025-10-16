@@ -1,0 +1,152 @@
+{% extends 'agenda/base.html' %}
+
+{% block title %}Dashboard de Estudos{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Seu Painel de Estudos</h1>
+
+<div class="row mb-5">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-white bg-primary shadow">
+            <div class="card-body">
+                <h5 class="card-title">Total de Tarefas</h5>
+                <p class="card-text fs-2">{{ total_tarefas }}</p>
+                <small>Em todas as matérias</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-white bg-success shadow">
+            <div class="card-body">
+                <h5 class="card-title">Tarefas Concluídas</h5>
+                <p class="card-text fs-2">{{ tarefas_concluidas }}</p>
+                <small>{{ porcentagem_concluida }}% de progresso!</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-white bg-info shadow">
+            <div class="card-body">
+                <h5 class="card-title">Provas Agendadas</h5>
+                <p class="card-text fs-2">{{ total_provas }}</p>
+                <small>{{ provas_futuras }} ainda serão realizadas</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-white bg-secondary shadow">
+            <div class="card-body">
+                <h5 class="card-title">Matérias Ativas</h5>
+                <p class="card-text fs-2">{{ all_materias }}</p>
+                <small>Para organizar seus estudos</small>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mb-5">
+    
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">🚨 Tarefas Prioridade ALTA</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for tarefa in tarefas_urgentes %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{% url 'tarefa_update' tarefa.pk %}" class="text-decoration-none text-dark">
+                            <strong>{{ tarefa.titulo }}</strong>
+                        </a>
+                        <br><small class="text-muted">{{ tarefa.materia.nome }}</small>
+                    </div>
+                    <span class="badge text-bg-secondary">{{ tarefa.data_fim|date:"d/m/Y" }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-center text-muted">Nenhuma tarefa urgente no momento.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">🎓 Próximas PROVAS</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for prova in proximas_provas %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{% url 'prova_update' prova.pk %}" class="text-decoration-none text-dark">
+                            <strong>{{ prova.titulo }}</strong>
+                        </a>
+                        <br><small class="text-muted">{{ prova.materia.nome }}</small>
+                    </div>
+                    <span class="badge text-bg-dark">{{ prova.data_prova|date:"d/m/Y" }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-center text-muted">Nenhuma prova agendada para breve.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">📅 Próximos Prazos de Tarefas</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for tarefa in tarefas_proximas %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{% url 'tarefa_update' tarefa.pk %}" class="text-decoration-none text-dark">
+                            <strong>{{ tarefa.titulo }}</strong>
+                        </a>
+                        <br><small class="text-muted">{{ tarefa.materia.nome }}</small>
+                    </div>
+                    <span class="badge text-bg-dark">{{ tarefa.data_fim|date:"d/m/Y" }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-center text-muted">Nenhuma tarefa próxima.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-3">Carga de Trabalho por Matéria</h3>
+        <ul class="list-group mb-5">
+            {% for materia in materias %}
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{% url 'tarefa_list' %}?materia={{ materia.pk }}" class="text-dark text-decoration-none">
+                            <strong>{{ materia.nome }} ({{ materia.nomenclatura }})</strong>
+                        </a>
+                        <small class="text-muted ms-2">({{ materia.total_tarefas }} tarefas totais)</small>
+                    </div>
+                    
+                    {% if materia.tarefas_pendentes > 0 %}
+                    <span class="badge text-bg-danger rounded-pill">
+                        {{ materia.tarefas_pendentes }} Pendente(s)
+                    </span>
+                    {% else %}
+                    <span class="badge text-bg-success rounded-pill">
+                        Tudo em dia!
+                    </span>
+                    {% endif %}
+                </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item text-center text-muted">Você ainda não cadastrou nenhuma matéria.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+{% endblock content %}

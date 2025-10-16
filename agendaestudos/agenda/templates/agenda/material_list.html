@@ -1,0 +1,44 @@
+{% extends 'agenda/base.html' %}
+
+{% block title %}Materiais: {{ prova.titulo }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Materiais para: <span class="text-primary">{{ prova.titulo }}</span></h1>
+    <a href="{% url 'material_create' prova.pk %}" class="btn btn-success">Adicionar Novo Material</a>
+</div>
+<p class="text-muted">Matéria: {{ prova.materia.nome }} | Data da Prova: {{ prova.data_prova|date:"d/m/Y"|default:"Não definida" }}</p>
+<hr>
+
+{% if materiais %}
+<ul class="list-group">
+    {% for material in materiais %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+            <strong>{{ material.titulo }}</strong> 
+            <span class="badge text-bg-secondary ms-2">{{ material.get_tipo_display }}</span>
+            <br>
+            {% if material.link_url %}
+                <a href="{{ material.link_url }}" target="_blank" class="small text-info">Visualizar Link</a>
+            {% elif material.arquivo %}
+                <a href="{{ material.arquivo.url }}" target="_blank" class="small text-info">Baixar Anexo</a>
+            {% endif %}
+        </div>
+        
+        <div>
+            <a href="{% url 'material_delete' material.pk %}" class="btn btn-sm btn-danger">Remover</a>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="alert alert-warning text-center">
+    Nenhum material de apoio adicionado ainda.
+</div>
+{% endif %}
+
+<div class="mt-4">
+    <a href="{% url 'prova_list' %}" class="btn btn-secondary">Voltar para a Lista de Provas</a>
+</div>
+
+{% endblock content %}

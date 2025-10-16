@@ -1,0 +1,59 @@
+{% extends 'agenda/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">{{ title }}</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data"> 
+                    {% csrf_token %}
+                    
+                    <h4 class="mb-3 text-primary">Informações da Prova</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.materia.id_for_label }}" class="form-label">{{ form.materia.label }}</label>
+                            {{ form.materia }}
+                            <div class="form-text text-danger">{{ form.materia.errors }}</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.titulo.id_for_label }}" class="form-label">{{ form.titulo.label }}</label>
+                            {{ form.titulo }}
+                            <div class="form-text text-danger">{{ form.titulo.errors }}</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.data_prova.id_for_label }}" class="form-label">{{ form.data_prova.label }}</label>
+                        {{ form.data_prova }}
+                        <div class="form-text text-danger">{{ form.data_prova.errors }}</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.observacoes.id_for_label }}" class="form-label">{{ form.observacoes.label }}</label>
+                        {{ form.observacoes }}
+                        <div class="form-text text-danger">{{ form.observacoes.errors }}</div>
+                    </div>
+                    
+                    <hr>
+                    <button type="submit" class="btn btn-success me-2 btn-lg">Salvar Prova</button>
+                    <a href="{% url 'prova_list' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+                </form>
+                
+                {% if title == 'Editar Prova' %}
+                <div class="mt-4 border-top pt-3">
+                    <p class="mb-2">Gerencie os materiais de apoio desta prova:</p>
+                    <a href="{% url 'material_list' prova.pk %}" class="btn btn-info btn-sm">
+                        Ir para Materiais de Apoio
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

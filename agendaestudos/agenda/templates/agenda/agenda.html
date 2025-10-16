@@ -1,0 +1,116 @@
+{% extends 'agenda/base.html' %}
+
+{% block title %}Agenda de Estudos{% endblock %}
+
+{% block head %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/pt-br.js'></script>
+{% endblock head %}
+
+
+{% block content %}
+<h1 class="mb-4">Minha Agenda de Estudos</h1>
+
+<div class="card shadow">
+    <div class="card-body">
+        <div id='calendar'></div>
+    </div>
+</div>
+
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalLabel">Detalhes da Tarefa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Título:</strong> <span id="modal-titulo"></span></p>
+                <p><strong>Matéria:</strong> <span id="modal-materia"></span></p>
+                <p><strong>Descrição:</strong> <span id="modal-descricao"></span></p>
+                <p><strong>Status:</strong> <span id="modal-status"></span></p>
+                <p><strong>Prazo Final:</strong> <span id="modal-data-fim"></span></p>
+                <a id="modal-link-edicao" href="#" class="btn btn-warning btn-sm mt-3">Editar Tarefa</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    
+    // Converte os dados do Django para um array JavaScript
+    var django_tarefas = JSON.parse('{{ tarefas_json|safe }}'.replace(/&quot;/g, '"'));
+    
+    // Mapeamento de Status para cores (Melhora a visualização)
+    var statusMap = {
+        'A': 'danger', // A Fazer - Vermelho
+        'E': 'warning', // Em Andamento - Amarelo
+        'C': 'success' // Concluída - Verde
+    };
+    
+    var events = [];
+    
+    django_tarefas.forEach(function(tarefa) {
+        var status = tarefa.fields.status;
+        var materiaNome = tarefa.fields.materia__nome; // Supondo que você ajustou o QuerySet ou fará o lookup
+        
+        // Mapeia o status do modelo (A, E, C) para uma cor do Bootstrap
+        var color = statusMap[status] || 'primary';
+        
+        events.push({
+            id: tarefa.pk,
+            title: tarefa.fields.titulo,
+            start: tarefa.fields.data_inicio,
+            end: tarefa.fields.data_fim, // Para mostrar como um período
+            allDay: false, 
+            color: color,
+            extendedProps: {
+                descricao: tarefa.fields.descricao || 'Sem descrição.',
+                status: status,
+                materia_id: tarefa.fields.materia,
+                // Assumindo que você precisará buscar o nome da matéria via JS ou incluir no JSON
+                // Por simplicidade, usaremos o nome da matéria que está no loop JS abaixo
+                materia_nome: '', 
+            }
+        });
+    });
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'pt-br', // Configura o calendário para Português
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: events,
+        
+        // Configura a ação ao clicar em um evento
+        eventClick: function(info) {
+            var event = info.event;
+            
+            // Aqui é onde você faria a lógica para buscar o nome da matéria pelo ID,
+            // mas para um MVP, vamos apenas usar o ID.
+            // Para fazer o Modal funcionar, vamos preenchê-lo
+            document.getElementById('modal-titulo').innerText = event.title;
+            document.getElementById('modal-descricao').innerText = event.extendedProps.descricao;
+            document.getElementById('modal-status').innerText = event.extendedProps.status; // Você pode melhorar isso
+            document.getElementById('modal-data-fim').innerText = new Date(event.end).toLocaleDateString('pt-BR');
+            
+            // Link de edição
+            var editUrl = "{% url 'tarefa_update' 0 %}".replace('0', event.id);
+            document.getElementById('modal-link-edicao').href = editUrl;
+            
+            var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+            eventModal.show();
+        },
+    });
+
+    calendar.render();
+});
+</script>
+{% endblock content %}

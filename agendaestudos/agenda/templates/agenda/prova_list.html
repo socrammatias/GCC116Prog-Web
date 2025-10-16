@@ -1,0 +1,87 @@
+{% extends 'agenda/base.html' %}
+
+{% block title %}Minhas Provas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Minhas Provas Agendadas</h1>
+    <a href="{% url 'prova_create' %}" class="btn btn-primary">Agendar Nova Prova</a>
+</div>
+
+<div class="card p-3 mb-4 shadow-sm">
+    <form method="GET" action="{% url 'prova_list' %}" class="row g-3 align-items-center">
+        <div class="col-md-5">
+            <label for="materia-select" class="form-label mb-0">Filtrar por Matéria:</label>
+        </div>
+        <div class="col-md-5">
+            <select name="materia" id="materia-select" class="form-select">
+                <option value="">Todas as Matérias</option>
+                {% for materia in all_materias %}
+                    <option value="{{ materia.pk }}" {% if current_materia == materia.pk %}selected{% endif %}>
+                        {{ materia.nome }} ({{ materia.nomenclatura }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-info w-100">Filtrar</button>
+        </div>
+    </form>
+</div>
+
+{% if provas %}
+    <div class="row">
+    {% for prova in provas %}
+        <div class="col-md-6 mb-4">
+            <div class="card {% if prova.data_prova|date:"Y-m-d" < "now"|date:"Y-m-d" %}border-secondary bg-light{% else %}border-danger shadow-sm{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center bg-danger text-white">
+                    <h5 class="mb-0">{{ prova.titulo }}</h5>
+                    <span class="badge text-bg-light fs-6">{{ prova.data_prova|date:"d/m/Y" }}</span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text"><strong>Matéria:</strong> {{ prova.materia.nome }} ({{ prova.materia.nomenclatura }})</p>
+                    <p class="card-text"><strong>Observações:</strong> {{ prova.observacoes|default:"Nenhuma observação." }}</p>
+
+                    {% comment %} NOVO BLOCO: Listagem de Materiais de Apoio {% endcomment %}
+                    {% if prova.materiais.all %}
+                        <hr class="my-2">
+                        <p class="mb-1"><strong>Materiais de Apoio:</strong></p>
+                        <ul class="list-unstyled small">
+                            {% for material in prova.materiais.all %}
+                                <li>
+                                    {% if material.link_url %}
+                                        <a href="{{ material.link_url }}" target="_blank" class="text-decoration-underline">{{ material.titulo }}</a> 
+                                        (<span class="text-muted">{{ material.tipo }}</span>)
+                                    {% elif material.arquivo %}
+                                        <a href="{{ material.arquivo.url }}" target="_blank" class="text-decoration-underline">{{ material.titulo }}</a>
+                                        (<span class="text-muted">{{ material.tipo }}</span>)
+                                    {% else %}
+                                        <span class="text-muted">{{ material.titulo }} ({{ material.tipo }})</span>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% comment %} FIM DO BLOCO DE MATERIAIS {% endcomment %}
+                    
+                    {% if prova.link_anexos %}
+                        <p><a href="{{ prova.link_anexos }}" target="_blank" class="btn btn-sm btn-outline-secondary">Ver Anexos/Lista de Exercícios</a></p>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <a href="{% url 'material_list' prova.pk %}" class="btn btn-info btn-sm me-2">Materiais ({{ prova.materiais.count }})</a>
+                        <a href="{% url 'prova_update' prova.pk %}" class="btn btn-warning btn-sm me-2">Editar</a>
+                        <a href="{% url 'prova_delete' prova.pk %}" class="btn btn-danger btn-sm">Deletar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info text-center" role="alert">
+        Nenhuma prova agendada. <a href="{% url 'prova_create' %}" class="alert-link">Agende a primeira agora!</a>
+    </div>
+{% endif %}
+
+{% endblock content %}

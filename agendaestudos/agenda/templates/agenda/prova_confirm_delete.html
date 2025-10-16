@@ -1,0 +1,24 @@
+{% extends 'agenda/base.html' %}
+
+{% block title %}Confirmar Exclusão{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="alert alert-danger shadow-lg" role="alert">
+            <h4 class="alert-heading">Tem certeza que deseja excluir esta Prova?</h4>
+            <p>Você está prestes a excluir permanentemente a prova:</p>
+            <p class="mb-1"><strong>Título:</strong> {{ prova.titulo }}</p>
+            <p><strong>Matéria:</strong> {{ prova.materia.nome }}</p>
+            <hr>
+            <p class="mb-0">Esta ação não pode ser desfeita.</p>
+        </div>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger me-2">Sim, Excluir Prova</button>
+            <a href="{% url 'prova_list' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock content %}
