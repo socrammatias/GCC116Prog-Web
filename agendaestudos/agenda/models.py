@@ -1,4 +1,5 @@
 # Em agenda/models.py
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -6,13 +7,26 @@ class Materia(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     nomenclatura = models.CharField(max_length=10, blank=True, verbose_name="Sigla")
     nome = models.CharField(max_length=100)
+    
+    notas_materia = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name="Anotações da Matéria"
+    )
+    
+    link_plano_ensino = models.URLField(
+        max_length=500, 
+        blank=True, 
+        null=True, 
+        verbose_name="Link do Plano de Ensino"
+    )
 
     def __str__(self):
         return f"{self.nome} ({self.nomenclatura})"
 
     class Meta:
         verbose_name_plural = "Matérias"
-
+        
 class Tarefa(models.Model):
     STATUS_CHOICES = [('A', 'A Fazer'), ('E', 'Em Andamento'), ('C', 'Concluída')]
     PRIORIDADE_CHOICES = [('B', 'Baixa'), ('M', 'Média'), ('A', 'Alta')]
@@ -24,6 +38,13 @@ class Tarefa(models.Model):
     data_fim = models.DateTimeField(verbose_name="Data de Fim")
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='A')
     prioridade = models.CharField(max_length=1, choices=PRIORIDADE_CHOICES, default='M')
+    
+    link_anexo = models.URLField(
+        max_length=500, 
+        blank=True, 
+        null=True, 
+        verbose_name="Link de Anexo/Material de Apoio"
+    )
 
     def __str__(self):
         return self.titulo
@@ -41,16 +62,12 @@ class Prova(models.Model):
     titulo = models.CharField(max_length=200, verbose_name="Título da Prova")
     data_prova = models.DateField(
         verbose_name="Data da Prova",
-        blank=True,  # Permite que o campo fique em branco no formulário
-        null=True    # Permite que o campo receba valor NULL no banco de dados
+        blank=True, 
+        null=True 
     )
     observacoes = models.TextField(blank=True, null=True, verbose_name="Observações")
     link_anexos = models.URLField(max_length=200, blank=True, null=True, verbose_name="Link para Anexos (Drive/Lista)")
     
-    # Campo para o usuário ver/editar apenas suas provas (Herdado indiretamente, mas útil)
-    # Embora a ligação seja via Matéria, é bom ter o usuário para filtros rápidos se necessário
-    # user = models.ForeignKey(User, on_delete=models.CASCADE, null=True) # Opcional, se a ligação via Matéria for suficiente.
-
     def __str__(self):
         return f"{self.titulo} ({self.materia.nome})"
 
@@ -59,6 +76,7 @@ class Prova(models.Model):
         ordering = ['data_prova']
         
 class MaterialDeApoio(models.Model):
+    # TIPO_CHOICES original mantido para compatibilidade com dados existentes, mas form usa simplificado
     TIPO_CHOICES = [
         ('LINK', 'Link Externo'),
         ('PDF', 'Arquivo PDF'),
@@ -75,10 +93,8 @@ class MaterialDeApoio(models.Model):
     
     tipo = models.CharField(max_length=5, choices=TIPO_CHOICES, default='LINK', verbose_name="Tipo de Material")
     
-    # Campo para o link (usado se tipo for 'LINK')
     link_url = models.URLField(max_length=500, blank=True, null=True, verbose_name="URL do Recurso")
     
-    # Campo para o arquivo (usado se tipo for 'PDF', 'TXT', 'OUTRO')
     arquivo = models.FileField(
         upload_to='materiais_provas/', 
         blank=True, 
@@ -86,7 +102,6 @@ class MaterialDeApoio(models.Model):
         verbose_name="Anexo de Arquivo"
     )
     
-    # Campo para o título do material
     titulo = models.CharField(max_length=255, verbose_name="Título do Material")
 
     def __str__(self):
@@ -94,3 +109,32 @@ class MaterialDeApoio(models.Model):
 
     class Meta:
         verbose_name_plural = "Materiais de Apoio"
+        
+        
+class HorarioAula(models.Model):
+    DIAS_SEMANA = [
+        ('SEG', 'Segunda-feira'),
+        ('TER', 'Terça-feira'),
+        ('QUA', 'Quarta-feira'),
+        ('QUI', 'Quinta-feira'),
+        ('SEX', 'Sexta-feira'),
+        ('SAB', 'Sábado'),
+        ('DOM', 'Domingo'),
+    ]
+    
+    materia = models.ForeignKey(
+        'Materia', 
+        on_delete=models.CASCADE, 
+        related_name='horarios',
+        verbose_name="Matéria"
+    )
+    dia_semana = models.CharField(max_length=3, choices=DIAS_SEMANA, verbose_name="Dia da Semana")
+    hora_inicio = models.TimeField(verbose_name="Hora de Início")
+    local = models.CharField(max_length=50, blank=True, null=True, verbose_name="Local/Sala")
+
+    def __str__(self):
+        return f"{self.materia.nome} ({self.dia_semana} {self.hora_inicio})"
+
+    class Meta:
+        verbose_name_plural = "Horários de Aula"
+        ordering = ['dia_semana', 'hora_inicio']

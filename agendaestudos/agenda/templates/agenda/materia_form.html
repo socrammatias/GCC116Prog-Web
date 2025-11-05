@@ -1,14 +1,184 @@
 {% extends 'agenda/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
 {% block content %}
-    <div class="card">
-        <div class="card-header"><h3>{{ title }}</h3></div>
-        <div class="card-body">
-            <form method="POST">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-success">Salvar</button>
-                <a href="{% url 'materia_list' %}" class="btn btn-secondary">Cancelar</a>
-            </form>
+    <div class="row justify-content-center">
+        <div class="col-md-10"> <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">{{ title }}</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        {% if not is_notes_view %} 
+                            <h4 class="mb-3 text-secondary">Nome e Classificação</h4>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }}</label>
+                                    {{ form.nome }}
+                                    <div class="form-text text-danger">{{ form.nome.errors }}</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.nomenclatura.id_for_label }}" class="form-label">{{ form.nomenclatura.label }}</label>
+                                    {{ form.nomenclatura }}
+                                    <div class="form-text text-danger">{{ form.nomenclatura.errors }}</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    </div>
+                            </div>
+
+                            <div class="row"> 
+                                <div class="col-12 mb-4">
+                                    <label for="{{ form.link_plano_ensino.id_for_label }}" class="form-label">{{ form.link_plano_ensino.label }}</label>
+                                    {{ form.link_plano_ensino }}
+                                    <div class="form-text text-danger">{{ form.link_plano_ensino.errors }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        
+                        {% if not is_notes_view %} 
+                            <h4 class="mb-3 mt-4 text-secondary">Quadro de Horários</h4>
+                            <p class="text-muted small">Adicione o dia, a hora de início e o local para o Quadro de Horários no Dashboard.</p>
+                            
+                            <div class="p-3 border rounded bg-light mb-4">
+                                {{ formset_horarios.management_form }}
+                                
+                                <table class="table table-sm table-borderless align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 25%;">Dia</th>
+                                            <th style="width: 25%;">Início</th>
+                                            <th style="width: 30%;">Local</th>
+                                            <th style="width: 10%;">Remover</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="horario-formset-container">
+                                        {% for form_horario in formset_horarios %}
+                                        <tr class="horario-form">
+                                            <td>{{ form_horario.dia_semana }}</td>
+                                            <td>{{ form_horario.hora_inicio }}</td>
+                                            <td>{{ form_horario.local }}</td>
+                                            <td>
+                                                {{ form_horario.id }}
+                                                <div class="form-check">
+                                                    {{ form_horario.DELETE }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                
+                                <button type="button" id="add-horario-btn" class="btn btn-sm btn-outline-secondary mt-2">
+                                    + Adicionar Horário
+                                </button>
+                            </div>
+                        {% endif %}
+
+                        
+                        <h4 class="mb-3 mt-4 text-secondary">Anotações Gerais</h4>
+                        <div class="mb-4">
+                            <label for="{{ form.notas_materia.id_for_label }}" class="form-label">{{ form.notas_materia.label }}</label>
+                            {{ form.notas_materia }}
+                            <div class="form-text text-danger">{{ form.notas_materia.errors }}</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success me-2 btn-lg">Salvar</button>
+                        <a href="{% url 'materia_list' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+                        
+                        {% if materia.pk %}
+                            <a href="{% url 'tarefa_list' %}?materia={{ materia.pk }}" class="btn btn-outline-info btn-lg ms-3">
+                                Ver Tarefas
+                            </a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
+
+<script>
+    // --- LÓGICA JAVASCRIPT PARA FORMSET DINÂMICO ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const addButton = document.getElementById('add-horario-btn');
+        const container = document.getElementById('horario-formset-container');
+        const totalForms = document.getElementById('id_horarioaula_set-TOTAL_FORMS');
+        const prefix = 'horarioaula_set';
+
+        // Clonar o template vazio (última linha)
+        const emptyFormRow = container.querySelector('tr.horario-form:last-child').cloneNode(true);
+        
+        // Esconder o template
+        if (parseInt(totalForms.value) > 0) {
+            container.querySelector('tr.horario-form:last-child').style.display = 'none';
+        }
+        
+        // Adicionar listener de remoção aos checkboxes existentes
+        document.querySelectorAll('.horario-form input[type="checkbox"][id$="-DELETE"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                this.closest('.horario-form').style.display = this.checked ? 'none' : '';
+            });
+        });
+
+        // Função para atualizar os IDs e nomes dos campos clonados
+        function updateElementIndex(row, index) {
+            // Atualiza o ID do formset-TOTAL_FORMS
+            row.id = row.id.replace(new RegExp('(' + prefix + '-\\d+-)'), prefix + '-' + index + '-');
+
+            // Atualiza todos os atributos 'name', 'id', 'for'
+            Array.from(row.querySelectorAll('*')).forEach(child => {
+                const idRegex = new RegExp('(' + prefix + '-\\d+-)');
+                const replacement = prefix + '-' + index + '-';
+                
+                if (child.id) child.id = child.id.replace(idRegex, replacement);
+                if (child.name) child.name = child.name.replace(idRegex, replacement);
+                if (child.htmlFor) child.htmlFor = child.htmlFor.replace(idRegex, replacement);
+                
+                // Limpar valores dos campos
+                if (child.tagName === 'INPUT' && child.type !== 'hidden' && child.type !== 'checkbox') {
+                    child.value = '';
+                }
+                if (child.name && child.name.endsWith('-id')) {
+                    child.value = ''; // Limpar PK
+                }
+                if (child.name && child.name.endsWith('-DELETE')) {
+                    child.checked = false; // Desmarcar DELETE
+                }
+            });
+        }
+        
+        // Função principal de clonagem ("Adicionar Mais")
+        addButton.addEventListener('click', function() {
+            let currentCount = parseInt(totalForms.value);
+            const newForm = emptyFormRow.cloneNode(true);
+            
+            newForm.style.display = '';
+
+            // Atualizar índices e limpar valores
+            updateElementIndex(newForm, currentCount);
+            
+            // Adicionar listener de remoção no novo checkbox
+            const deleteCheckbox = newForm.querySelector('input[type="checkbox"][id$="-DELETE"]');
+            if (deleteCheckbox) {
+                deleteCheckbox.addEventListener('change', function() {
+                    this.closest('.horario-form').style.display = this.checked ? 'none' : '';
+                });
+            }
+
+            // Adicionar ao container e atualizar a contagem
+            container.appendChild(newForm);
+            totalForms.value = currentCount + 1;
+            
+            newForm.scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+</script>
 {% endblock content %}

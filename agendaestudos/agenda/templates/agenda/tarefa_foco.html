@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Estilo Minimalista e Focado */
+        body {
+            background-color: #1a1a2e; /* Fundo escuro para reduzir a fadiga visual */
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .focus-container {
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 15px;
+            background-color: #2e2e4a;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+        }
+        #timer-display {
+            font-size: 6rem;
+            font-weight: bold;
+            margin: 30px 0;
+            color: #ff5757; /* Cor do cronômetro (tom Pomodoro) */
+        }
+        .btn-action {
+            width: 150px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="focus-container">
+    <h2>🎯 Modo Foco Ativo</h2>
+    <h3 class="mb-4">{{ tarefa.titulo }}</h3>
+    <p class="text-muted">{{ tarefa.materia.nome }}</p>
+
+    <div id="timer-display">25:00</div>
+
+    <div class="d-flex justify-content-center gap-3">
+        <button id="start-pause-btn" class="btn btn-action btn-success">Iniciar</button>
+        <button id="reset-btn" class="btn btn-action btn-outline-info">Zerar (25 min)</button>
+    </div>
+
+    <div class="mt-4">
+        <p id="status-message">Pronto para começar sua sessão de 25 minutos.</p>
+        <a href="{% url 'tarefa_list' %}" class="btn btn-sm btn-link text-white-50">Sair do Modo Foco</a>
+    </div>
+
+    <input type="hidden" id="tarefa-id" value="{{ tarefa.pk }}">
+    <input type="hidden" id="csrf-token" value="{% csrf_token %}">
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const timerDisplay = document.getElementById('timer-display');
+        const startPauseBtn = document.getElementById('start-pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const statusMessage = document.getElementById('status-message');
+        const tarefaId = document.getElementById('tarefa-id').value;
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+        let timeRemaining = 25 * 60; // 25 minutos iniciais
+        let timer = null;
+        let isRunning = false;
+        let isBreak = false;
+        const STUDY_TIME = 25 * 60;
+        const BREAK_TIME = 5 * 60; 
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            timerDisplay.textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function toggleTimer() {
+            if (isRunning) {
+                // AÇÃO 1: PAUSAR A CONTAGEM E MUDAR BOTÃO
+                clearInterval(timer);
+                isRunning = false;
+                startPauseBtn.textContent = 'Continuar';
+                startPauseBtn.classList.remove('btn-success');
+                startPauseBtn.classList.add('btn-warning');
+                statusMessage.textContent = 'Pausado. Tempo restante: ' + timerDisplay.textContent;
+            } else {
+                // AÇÃO 2: INICIAR/CONTINUAR
+                isRunning = true;
+                startPauseBtn.textContent = 'Pausar';
+                startPauseBtn.classList.remove('btn-warning');
+                startPauseBtn.classList.add('btn-success');
+                timer = setInterval(countdown, 1000);
+                statusMessage.textContent = isBreak ? 'Sessão de Pausa Ativa.' : 'Foco Total!';
+            }
+        }
+
+        function countdown() {
+            timeRemaining--;
+            updateDisplay();
+
+            if (timeRemaining <= 0) {
+                clearInterval(timer);
+                isRunning = false;
+                
+                if (!isBreak) {
+                    // Fim do Pomodoro: MARCAR COMO CONCLUÍDA
+                    markTaskAsComplete(tarefaId, csrfToken);
+                    
+                } else {
+                    // Fim da Pausa: Recomeçar para o estudo
+                    isBreak = false;
+                    timeRemaining = STUDY_TIME;
+                    startPauseBtn.textContent = 'Iniciar Foco';
+                    updateDisplay();
+                    statusMessage.textContent = 'Pausa terminada. Clique para iniciar o próximo FOCO.';
+                }
+            }
+        }
+        
+        // NOVO: Função para zerar o cronômetro e voltar para 25 minutos
+        function resetStudyTimer() {
+            if (isRunning) {
+                clearInterval(timer);
+            }
+            isRunning = false;
+            isBreak = false;
+            timeRemaining = STUDY_TIME;
+            startPauseBtn.textContent = 'Iniciar';
+            startPauseBtn.classList.remove('btn-warning');
+            startPauseBtn.classList.add('btn-success');
+            updateDisplay();
+            statusMessage.textContent = 'Pronto para começar sua sessão de 25 minutos.';
+        }
+        
+        // Função para marcar como concluída via AJAX (Mantida)
+        function markTaskAsComplete(id, token) {
+            statusMessage.textContent = 'Tarefa concluída! Aguarde o redirecionamento...';
+            timerDisplay.style.color = '#28a745';
+            
+            fetch(`{% url 'tarefa_concluir' 0 %}?pk=${id}`.replace('0', id), {
+                method: 'GET', 
+                headers: {
+                    'X-CSRFToken': token,
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                window.location.href = '{% url "tarefa_list" %}';
+            })
+            .catch(error => {
+                statusMessage.textContent = 'Erro ao concluir tarefa. Tente novamente.';
+                console.error('Erro AJAX:', error);
+            });
+        }
+
+
+        // Conexão dos botões com as novas funcionalidades
+        startPauseBtn.addEventListener('click', toggleTimer);
+        resetBtn.addEventListener('click', resetStudyTimer); 
+
+        updateDisplay();
+    });
+</script>
+
+</body>
+</html>

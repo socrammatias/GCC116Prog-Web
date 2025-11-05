@@ -1,4 +1,7 @@
 {% extends 'agenda/base.html' %}
+{% load tempo_restante %} 
+
+{% block title %}Minhas Tarefas{% endblock %}
 {% block content %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Minhas Tarefas</h2>
@@ -48,36 +51,75 @@
             </div>
         </form>
     </div>
+
     <div class="table-responsive">
         <table class="table table-hover">
             <thead>
                 <tr>
                     <th>Título</th>
                     <th>Matéria</th>
-                    <th>Início</th>
-                    <th>Fim</th>
-                    <th>Status</th>
+                    <th>Prazo Final</th>
+                    <th>⏰ Tempo Restante</th> 
                     <th>Prioridade</th>
+                    <th>Status</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for tarefa in tarefas %}
-                <tr>
-                    <td>{{ tarefa.titulo }}</td>
-                    <td>{{ tarefa.materia.nome }}</td>
-                    <td>{{ tarefa.data_inicio|date:"d/m/Y H:i" }}</td>
-                    <td>{{ tarefa.data_fim|date:"d/m/Y H:i" }}</td>
-                    <td><span class="badge bg-secondary">{{ tarefa.get_status_display }}</span></td>
-                    <td><span class="badge bg-info">{{ tarefa.get_prioridade_display }}</span></td>
+                <tr class="{% if tarefa.status == 'C' %}table-success{% endif %}">
                     <td>
-                        <a href="{% url 'tarefa_update' tarefa.pk %}" class="btn btn-secondary btn-sm">Editar</a>
-                        <a href="{% url 'tarefa_delete' tarefa.pk %}" class="btn btn-danger btn-sm">Deletar</a>
+                        <strong>{{ tarefa.titulo }}</strong>
+                        {% if tarefa.link_anexo %}
+                            <br><a href="{{ tarefa.link_anexo }}" target="_blank" class="small text-muted text-decoration-underline">
+                                [Ver Material de Apoio]
+                            </a>
+                        {% endif %}
+                    </td>
+                    <td>{{ tarefa.materia.nome }}</td>
+                    <td>{{ tarefa.data_fim|date:"d/m/Y H:i" }}</td> 
+                    
+                    <td>
+                        {% if tarefa.status != 'C' %}
+                            <span class="fw-bold">
+                                {{ tarefa.data_fim|formatar_tempo_restante }}
+                            </span>
+                        {% else %}
+                            <span class="text-success">Concluída!</span>
+                        {% endif %}
+                    </td>
+
+                    <td><span class="badge bg-info">{{ tarefa.get_prioridade_display }}</span></td>
+                    
+                    <td>
+                        {% if tarefa.status == 'C' %}
+                            <span class="badge bg-success">Concluída</span>
+                        {% elif tarefa.status == 'A' %}
+                            <span class="badge bg-danger">A Fazer</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Em Andamento</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        <div class="d-flex flex-nowrap">
+                            {% if tarefa.status != 'C' %}
+                                <a href="{% url 'tarefa_foco' tarefa.pk %}" class="btn btn-secondary btn-sm me-2">
+                                    Modo Foco
+                                </a>
+                                <a href="{% url 'tarefa_concluir' tarefa.pk %}" class="btn btn-success btn-sm me-2">
+                                    ✔ Concluir
+                                </a>
+                            {% endif %}
+                            
+                            <a href="{% url 'tarefa_update' tarefa.pk %}" class="btn btn-warning btn-sm me-2">Editar</a>
+                            <a href="{% url 'tarefa_delete' tarefa.pk %}" class="btn btn-danger btn-sm">Deletar</a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center">
+                    <td colspan="7" class="text-center"> 
                         {% if current_filters.materia or current_filters.status or current_filters.prioridade %}
                             Nenhuma tarefa encontrada com os filtros aplicados.
                         {% else %}

@@ -1,25 +1,84 @@
 {% extends 'agenda/base.html' %}
+
+{% block title %}Minhas Matérias{% endblock %}
+
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Minhas Matérias</h2>
-        <a href="{% url 'materia_create' %}" class="btn btn-primary">Adicionar Matéria</a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Gestão de Matérias</h1>
+        <a href="{% url 'materia_create' %}" class="btn btn-primary btn-lg">Adicionar Nova Matéria</a>
     </div>
+
+    {% if materias %}
     <div class="list-group">
         {% for materia in materias %}
-            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <div class="flex-grow-1">
-                    <h5 class="mb-1">{{ materia.nome }}</h5>
+            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-start p-3">
+                
+                <div class="flex-grow-1 me-4">
+                    <h5 class="mb-1 text-primary">{{ materia.nome }}</h5>
                     <small class="text-muted">{{ materia.nomenclatura }}</small>
+                    
+                    {% if materia.notas_materia %}
+                        <div class="mt-2 p-2 border rounded bg-white">
+                            <h6 class="text-secondary mb-1">Anotações:</h6>
+                            <small class="text-dark">{{ materia.notas_materia|linebreaksbr }}</small>
+                        </div>
+                    {% endif %}
+
+                    {% if materia.link_plano_ensino %}
+                        <div class="mt-2">
+                            <a href="{{ materia.link_plano_ensino }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                📄 Ver Plano de Ensino
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    <hr class="my-2">
+                    
+                    <div class="row align-items-center">
+                        
+                        <div class="col-md-6 mb-2">
+                            <span class="badge text-bg-info me-3">📝 Tarefas: {{ materia.total_tarefas }}</span>
+                            <span class="badge text-bg-danger me-3">🎓 Provas: {{ materia.total_provas }}</span>
+                            <span class="badge text-bg-secondary">🔗 Materiais: {{ materia.total_materiais }}</span> 
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {% if materia.total_tarefas > 0 %}
+                                <div class="progress" role="progressbar" aria-label="Progresso da Matéria" 
+                                     aria-valuenow="{{ materia.percentual_concluido|default:'0' }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    <div class="progress-bar bg-success" style="width: {{ materia.percentual_concluido|default:'0' }}%"></div>
+                                </div>
+                                <small class="d-block mt-1 text-muted">
+                                    {{ materia.tarefas_concluidas }} de {{ materia.total_tarefas }} Tarefas Concluídas ({{ materia.percentual_concluido|default:'0' }}%)
+                                </small>
+                            {% else %}
+                                <small class="text-secondary">Ainda não há tarefas.</small>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <a href="{% url 'materia_update' materia.pk %}" class="btn btn-secondary btn-sm">Editar</a>
+                
+                <div class="d-flex flex-column align-items-end">
+                    
+                    <a href="{% url 'materia_notes_update' materia.pk %}" class="btn btn-outline-secondary btn-sm mb-2">
+                        Editar Anotações
+                    </a>
+                    
+                    <a href="{% url 'tarefa_list' %}?materia={{ materia.pk }}" class="btn btn-outline-info btn-sm mb-2">
+                        Ver Tarefas
+                    </a>
+                    <a href="{% url 'materia_update' materia.pk %}" class="btn btn-secondary btn-sm mb-2">Editar Matéria</a>
                     <a href="{% url 'materia_delete' materia.pk %}" class="btn btn-danger btn-sm">Deletar</a>
                 </div>
             </div>
-        {% empty %}
-            <div class="list-group-item">
-                <p class="mb-1">Nenhuma matéria cadastrada ainda. Que tal adicionar a primeira?</p>
-            </div>
+            
         {% endfor %}
     </div>
+    {% else %}
+        <div class="alert alert-info text-center">
+            <p class="mb-1">Nenhuma matéria cadastrada. Clique no botão acima para adicionar a primeira!</p>
+        </div>
+    {% endif %}
 {% endblock content %}
